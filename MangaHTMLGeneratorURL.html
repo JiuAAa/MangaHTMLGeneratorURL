@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manga HTML Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input[type="text"]:focus,
+        input[type="file"]:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Manga HTML Generator</h1>
+        
+        <div class="input-group">
+            <label for="title">Gallery Title:</label>
+            <input type="text" id="title" placeholder="e.g., My Manga Collection">
+        </div>
+        
+        <div class="input-group">
+            <label for="file">Upload Text File (URLs):</label>
+            <input type="file" id="file" accept=".txt">
+        </div>
+        
+        <button onclick="generate()">Generate HTML</button>
+        
+        <div id="message"></div>
+    </div>
+
+    <script>
+        function generate() {
+            var title = document.getElementById('title').value.trim();
+            var file = document.getElementById('file').files[0];
+            var messageDiv = document.getElementById('message');
+            
+            if (!title) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '❌ Please enter a title';
+                return;
+            }
+            
+            if (!file) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = '❌ Please select a file';
+                return;
+            }
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var content = e.target.result;
+                var urls = content.split('\n')
+                    .map(function(url) { return url.trim(); })
+                    .filter(function(url) { return url.length > 0; });
+                
+                if (urls.length === 0) {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = '❌ No valid URLs found in file';
+                    return;
+                }
+                
+                var html = makeHTML(urls, title);
+                downloadHTML(html, 'my_manga.html');
+                
+                messageDiv.className = 'message success';
+                messageDiv.textContent = '✅ Successfully generated! Downloading...';
+            };
+            reader.readAsText(file);
+        }
+        
+        function encodeBase64(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+        
+        function makeHTML(urls, title) {
+            var encodedUrls = urls.map(function(url) {
+                return encodeBase64(url);
+            });
+            
+            var footer = '<div class="footer"><p><b>防失联</b> <a href="https://t.me/BGG_Home" target="_blank">@BGG_Home</a></p></div>';
+            
+            var protectScript = 'document.oncontextmenu=function(){return false};' +
+                'document.ondragstart=function(e){if(e.target.tagName=="IMG"){return false}};' +
+                'pic.addEventListener("dragstart",function(e){e.preventDefault()},false);' +
+                'pic.addEventListener("contextmenu",function(e){e.preventDefault()},false);' +
+                'document.addEventListener("copy",function(e){e.preventDefault()},false);' +
+                'document.onkeydown=function(e){' +
+                  'if((e.ctrlKey||e.metaKey)&&(e.key=="u"||e.key=="U"||e.key=="c"||e.key=="C"||e.key=="p"||e.key=="P"||e.key=="a"||e.key=="A")){e.preventDefault();return false}' +
+                  'if(e.key=="F12"||e.key=="F11"||e.key=="F10"){e.preventDefault();return false}' +
+                  'if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(e.key=="i"||e.key=="I"||e.key=="c"||e.key=="C"||e.key=="j"||e.key=="J")){e.preventDefault();return false}' +
+                  'if(light.className.includes("on")){if(e.key=="ArrowLeft"){previousImage();e.preventDefault()}else if(e.key=="ArrowRight"){nextImage();e.preventDefault()}else if(e.key=="Escape"){light.className=""}}' +
+                '};';
+            
+            var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>' + title + '</title><style>' +
+                '*{margin:0;padding:0}' +
+                'body{background:#f5f5f5;padding:20px;font-family:Arial}' +
+                '.main{max-width:800px;margin:0 auto;background:white;padding:30px;border-radius:8px}' +
+                'h1{text-align:center;margin-bottom:30px;border-bottom:2px solid #007bff;padding-bottom:10px}' +
+                '.imgs{display:flex;flex-direction:column;gap:20px}' +
+                '.img{width:100%;cursor:pointer;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,0.1);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}' +
+                '.img:hover{opacity:0.9}' +
+                '.footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;text-align:center}' +
+                '.footer p{font-size:18px;color:#333;line-height:1.6}' +
+                '.footer a{color:#007bff;text-decoration:none;font-weight:bold;cursor:pointer}' +
+                '.footer a:hover{text-decoration:underline;color:#0056b3}' +
+                '#light{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:999;align-items:center;justify-content:center;overflow:hidden}' +
+                '#light.on{display:flex}' +
+                '#light img{max-width:90%;max-height:90%;object-fit:contain;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;pointer-events:none;-webkit-user-drag:none}' +
+                '#close{position:absolute;top:20px;right:30px;color:white;font-size:30px;cursor:pointer;background:rgba(0,0,0,0.5);width:45px;height:45px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:1000}' +
+                '#info{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.6);padding:10px 15px;border-radius:4px;font-size:13px;pointer-events:none}' +
+                '.arrow{position:absolute;top:50%;transform:translateY(-50%);font-size:40px;color:rgba(255,255,255,0.6);cursor:pointer;user-select:none;padding:20px;z-index:1000}' +
+                '.arrow:hover{color:rgba(255,255,255,0.9)}' +
+                '.arrow-left{left:10px}' +
+                '.arrow-right{right:10px}' +
+                '</style></head><body><div class="main"><h1>📚 ' + title + '</h1><div class="imgs" id="imgs"></div>' + footer + '</div>' +
+                '<div id="light"><div class="arrow arrow-left" id="prevBtn">❮</div><div class="arrow arrow-right" id="nextBtn">❯</div><div id="close">×</div><img id="pic"><div id="info"><span id="page">1/1</span> | 缩放: <span id="zoom">100</span>%</div></div>' +
+                '<script>' +
+                'var zoom=1,currentIndex=0,urls=["' + encodedUrls.join('","') + '"],pic=document.getElementById("pic"),light=document.getElementById("light"),close=document.getElementById("close"),zoomText=document.getElementById("zoom"),pageText=document.getElementById("page"),prevBtn=document.getElementById("prevBtn"),nextBtn=document.getElementById("nextBtn"),touchStartX=0,touchStartY=0,touchStartDistance=0;' +
+                protectScript +
+                'function decodeBase64(str){try{return decodeURIComponent(escape(atob(str)))}catch(e){return str}}' +
+                'function initImages(){var imgsDiv=document.getElementById("imgs");for(var i=0;i<urls.length;i++){(function(index){var img=document.createElement("img");img.src=decodeBase64(urls[index]);img.className="img";img.draggable=false;img.addEventListener("contextmenu",function(e){e.preventDefault()},false);img.addEventListener("dragstart",function(e){e.preventDefault()},false);img.onclick=function(){openImage(index)};imgsDiv.appendChild(img)})(i)}}' +
+                'initImages();' +
+                'function openImage(index){currentIndex=index;pic.src=decodeBase64(urls[index]);light.className="on";zoom=1;updateZoom();updatePage()}' +
+                'close.onclick=function(){light.className=""};' +
+                'prevBtn.onclick=function(e){e.stopPropagation();previousImage()};' +
+                'nextBtn.onclick=function(e){e.stopPropagation();nextImage()};' +
+                'light.onclick=function(e){if(e.target===light){light.className=""}};' +
+                'pic.onwheel=function(e){e.preventDefault();zoom*=e.deltaY>0?0.9:1.1;if(zoom<0.5)zoom=0.5;if(zoom>5)zoom=5;updateZoom()};' +
+                'pic.addEventListener("touchstart",function(e){if(e.touches.length===1){touchStartX=e.touches[0].clientX;touchStartY=e.touches[0].clientY}else if(e.touches.length===2){touchStartDistance=getDistance(e.touches[0],e.touches[1]);e.preventDefault()}},false);' +
+                'pic.addEventListener("touchmove",function(e){if(e.touches.length===2){var currentDistance=getDistance(e.touches[0],e.touches[1]);var scale=currentDistance/touchStartDistance;zoom*=scale;if(zoom<0.5)zoom=0.5;if(zoom>5)zoom=5;updateZoom();touchStartDistance=currentDistance;e.preventDefault()}},false);' +
+                'light.addEventListener("touchend",function(e){if(e.touches.length===0&&touchStartX!==0){var touchEndX=e.changedTouches[0].clientX;var diff=touchStartX-touchEndX;if(Math.abs(diff)>50){if(diff>0){nextImage()}else{previousImage()}}touchStartX=0;touchStartY=0}},false);' +
+                'function getDistance(touch1,touch2){var dx=touch1.clientX-touch2.clientX;var dy=touch1.clientY-touch2.clientY;return Math.sqrt(dx*dx+dy*dy)}' +
+                'function previousImage(){if(currentIndex>0){openImage(currentIndex-1)}}' +
+                'function nextImage(){if(currentIndex<urls.length-1){openImage(currentIndex+1)}}' +
+                'function updateZoom(){pic.style.transform="scale("+zoom+")";zoomText.textContent=Math.round(zoom*100)}' +
+                'function updatePage(){pageText.textContent=(currentIndex+1)+"/"+urls.length}' +
+                '<\/script></body></html>';
+            
+            return html;
+        }
+        
+        function downloadHTML(html, filename) {
+            var blob = new Blob([html], { type: 'text/html' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
